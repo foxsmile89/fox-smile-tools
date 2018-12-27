@@ -1,5 +1,8 @@
 package com.smile.tools.ip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @className MainTest
  * @description Ip工具类main测试
@@ -9,12 +12,14 @@ package com.smile.tools.ip;
  **/
 public class MainTest {
 
+    private static final Logger logger = LoggerFactory.getLogger(MainTest.class);
+
     public static void main(final String[] args) {
         final String ipStr = "192.185.11.11";
-        System.out.println(IpNumInterConvert.getIpNum(ipStr));
+        logger.info("ipStr:{},ipNum:{}", ipStr, IpNumInterConvert.getIpNum(ipStr));
 
         final Long ipNum = 3233352459L;
-        System.out.println(IpNumInterConvert.getIpString(ipNum));
+        logger.info("ipNum:{},ipStr:{}", ipNum, IpNumInterConvert.getIpString(ipNum));
     }
 
 }
