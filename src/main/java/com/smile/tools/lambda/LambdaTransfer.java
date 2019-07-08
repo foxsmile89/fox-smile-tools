@@ -10,6 +10,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * lambda表达式转换自测
+ * @author smile
+ * @date 2019-07-08 10:50:00
+ * @version 1.0
+ **/
 public class LambdaTransfer {
 
     private static final Logger logger = LoggerFactory.getLogger(LambdaTransfer.class);
