@@ -4,15 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @className MainTest
- * @description Ip工具类main测试
+ * Ip工具类main测试
  * @author zhaojinyong
  * @date 2018-06-01 10:50:00
  * @version 1.0
  **/
-public class MainTest {
+public class MainExcute {
 
-    private static final Logger logger = LoggerFactory.getLogger(MainTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(MainExcute.class);
 
     public static void main(final String[] args) {
         final String ipStr = "192.185.11.11";

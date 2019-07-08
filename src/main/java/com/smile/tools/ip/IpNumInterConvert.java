@@ -1,13 +1,17 @@
 package com.smile.tools.ip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * @className IpNumInterConvert
- * @description ip和数字互转
+ * ip和数字互转
  * @author zhaojinyong
  * @date 2018-06-01 10:50:00
  * @version 1.0
  **/
 public class IpNumInterConvert {
+
+    private static final Logger logger = LoggerFactory.getLogger(IpNumInterConvert.class);
 
     /**
      * IP分段数
@@ -34,7 +38,7 @@ public class IpNumInterConvert {
                 // 向左移8位
                 ipNum = ipNum << 8;
                 ipNum += Integer.parseInt(str);
-                System.out.println(ipNum);
+                logger.info("ipNum:{}", ipNum);
             }
         }
         return ipNum;
