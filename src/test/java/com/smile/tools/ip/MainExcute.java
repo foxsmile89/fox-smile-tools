@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Ip工具类main测试
- * @author zhaojinyong
+ * @author smile
  * @date 2018-06-01 10:50:00
  * @version 1.0
  **/

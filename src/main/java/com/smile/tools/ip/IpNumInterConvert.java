@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * ip和数字互转
- * @author zhaojinyong
+ * @author smile
  * @date 2018-06-01 10:50:00
  * @version 1.0
  **/
