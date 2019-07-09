@@ -33,6 +33,11 @@ public class LoanDto implements Serializable {
     private String userId;
 
     /**
+     * 分期数
+     */
+    private Integer planNum;
+
+    /**
      * 贷款金额
      */
     private BigDecimal loanAmt;
