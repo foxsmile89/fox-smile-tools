@@ -23,25 +23,42 @@ public class LambdaCollect {
         List<LoanDto> loanList = new ArrayList<>();
         LoanDto loanDto1 = new LoanDto();
         loanDto1.setLoanId(1001L);
-        loanDto1.setUserId("abc");
+        loanDto1.setUserId("afc");
         loanDto1.setPlanNum(1);
         loanDto1.setLoanAmt(new BigDecimal("100"));
 
         LoanDto loanDto2 = new LoanDto();
         loanDto2.setLoanId(1002L);
-        loanDto2.setUserId("cde");
+        loanDto2.setUserId("ade");
         loanDto2.setPlanNum(3);
         loanDto2.setLoanAmt(new BigDecimal("200"));
 
         loanList.add(loanDto1);
         loanList.add(loanDto2);
-
-        Map<String,List<LoanDto>> mapByUser = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId));
-        List<BigDecimal> loanAmtList = loanList.stream().map(LoanDto::getLoanAmt).collect(Collectors.toList());
         logger.info("loanList before:{}", loanList);
 
-        //分组map更改list值后,【原list中的对象值变更且原对象值也变更】!!!!
-        mapByUser.values().forEach(userLoanList -> userLoanList.forEach(loanDto -> loanDto.setLoanAmt(loanDto.getLoanAmt().add(new BigDecimal("123")))));
+        Map<String,List<LoanDto>> group1 = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId));
+        List<BigDecimal> loanAmtList = loanList.stream().map(LoanDto::getLoanAmt).collect(Collectors.toList());
+        //二级分组,先按userId,再按loanId分组
+        Map<String,Map<Long,List<LoanDto>>> group2 = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId, Collectors.groupingBy(LoanDto::getLoanId)));
+        logger.info("group2:{}", group2);
+
+        //分组统计
+        Map<String,Long> groupCount = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId, Collectors.counting()));
+        logger.info("groupCount:{}", groupCount);
+
+        //userId作为key, 将对象的loanId过滤为set后作为value，返回时map.key乱序
+        Map<String,Set<Long>> groupSet = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId, Collectors.mapping(LoanDto::getLoanId, Collectors.toSet())));
+        logger.info("groupSet:{}", groupSet);
+
+        //第2个参数,指定生成的map按顺序存放的map,返回时按map存放顺序
+        Map<String,Set<Long>> groupLinkMapSet = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId,
+                LinkedHashMap::new,
+                Collectors.mapping(LoanDto::getLoanId, Collectors.toSet())));
+        logger.info("groupLinkMapSet:{}", groupLinkMapSet);
+
+        //groupingBy分组为map更改list值后,【原list中的对象值变更且原对象值也变更】!!!!
+        group1.values().forEach(userLoanList -> userLoanList.forEach(loanDto -> loanDto.setLoanAmt(loanDto.getLoanAmt().add(new BigDecimal("123")))));
         logger.info("loanList after1:{}", loanList);
 
         logger.info("loanList after1 loan1:{}, loan2:{}", loanDto1, loanDto2);
@@ -104,6 +121,24 @@ public class LambdaCollect {
         IntSummaryStatistics intStatis = loanList.stream().collect(Collectors.summarizingInt(LoanDto::getPlanNum));
         DoubleSummaryStatistics dbStatis = loanList.stream().collect(Collectors.summarizingDouble(loan->loan.getLoanAmt().doubleValue()));
         logger.info("1 intStatis:{}, dbStatis:{}", intStatis, dbStatis);
+
+
+        //转换为set,并验证是否深复制,不是深复制，会更改原集合元素值和对象原值
+        Set<LoanDto> loanSet = loanList.stream().collect(Collectors.toSet());
+        //替代写法
+        loanSet = new HashSet<>(loanList);
+        loanSet.forEach(loanDto -> loanDto.setLoanAmt(loanDto.getLoanAmt().add(new BigDecimal("111"))));
+        logger.info("toSet modify after,loanList:{},loan1:{}", loanList, loanDto1);
+
+        //拼接元素,要求调用的list元素值必须为String类型,否则报错
+        List<String> userList = loanList.stream().map(LoanDto::getUserId).collect(Collectors.toList());
+        String join1 = userList.stream().collect(Collectors.joining());
+        //第1个参数为元素间分割符, 2为整体前缀, 3为整体后缀
+        String join2 = userList.stream().collect(Collectors.joining("-|-","[","]"));
+        logger.info("join1:{},,,,join2:{}", join1,join2);
+
+        //partitioningBy验证
+        //loanList.stream().collect(Collectors.partitioningBy(LoanDto))
     }
 
 }

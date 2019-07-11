@@ -1,29 +1,29 @@
-package com.smile.tools.cds;
+package com.smile.tools.hash;
 
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 库表hash规则工具类
+ * hash规则工具类
  * @author smile
  * @date 2019-07-10 10:50:00
  * @version 1.0
  **/
 @Slf4j
-public class CdsRuleRouterUtil {
+public class HashRuleRouterUtil {
 
 
-    private CdsRuleRouterUtil(){}
+    private HashRuleRouterUtil(){}
 
     /**
      * 分库数量
      */
-    public static final int DB_COUNT = 24;
+    static final int DB_COUNT = 24;
 
     /**
      * 单库分表数量
      */
-    public static final int TABLE_COUNT = 50;
+    static final int TABLE_COUNT = 50;
 
 
     /**
@@ -31,7 +31,7 @@ public class CdsRuleRouterUtil {
      * @param splitKeyValue 切分键值
      * @return 2位库名后缀
      */
-    public static String routeDB(String splitKeyValue) {
+    static String routeDB(String splitKeyValue) {
         //(Math.abs(splitKeyValue.hashCode()) % 1200) / 50
         int dbSuffix = Math.abs(splitKeyValue.hashCode()) % (DB_COUNT*TABLE_COUNT) / TABLE_COUNT;
         return String.format("%02d", dbSuffix);
@@ -42,7 +42,7 @@ public class CdsRuleRouterUtil {
      * @param splitKeyValue 切分键值
      * @return 4位表名后缀
      */
-    public static String routeTable(String splitKeyValue) {
+    static String routeTable(String splitKeyValue) {
         //(Math.abs(splitKeyValue.hashCode()) % 50)
         int tableSuffix = Math.abs(splitKeyValue.hashCode()) % (TABLE_COUNT) ;
         return String.format("%04d", tableSuffix);
