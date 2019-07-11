@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
 /**
@@ -33,8 +35,15 @@ public class LambdaCollect {
         loanDto2.setPlanNum(3);
         loanDto2.setLoanAmt(new BigDecimal("200"));
 
+        LoanDto loanDto3 = new LoanDto();
+        loanDto3.setLoanId(1003L);
+        loanDto3.setUserId("ade");
+        loanDto3.setPlanNum(3);
+        loanDto3.setLoanAmt(new BigDecimal("300"));
+
         loanList.add(loanDto1);
         loanList.add(loanDto2);
+        loanList.add(loanDto3);
         logger.info("loanList before:{}", loanList);
 
         Map<String,List<LoanDto>> group1 = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId));
@@ -51,7 +60,7 @@ public class LambdaCollect {
         Map<String,Set<Long>> groupSet = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId, Collectors.mapping(LoanDto::getLoanId, Collectors.toSet())));
         logger.info("groupSet:{}", groupSet);
 
-        //第2个参数,指定生成的map按顺序存放的map,返回时按map存放顺序
+        //3参分组,第2个参数,指定生成的map按顺序存放的map,返回时按map存放顺序
         Map<String,Set<Long>> groupLinkMapSet = loanList.stream().collect(Collectors.groupingBy(LoanDto::getUserId,
                 LinkedHashMap::new,
                 Collectors.mapping(LoanDto::getLoanId, Collectors.toSet())));
@@ -69,8 +78,21 @@ public class LambdaCollect {
         }
         logger.info("loanList after2:{}", loanList);
 
+        //转换为并发map,key=String,value=Set<BigDecimal>
+        ConcurrentMap<String,Set<BigDecimal>> cMapGroup1 = loanList.stream().collect(
+                Collectors.groupingByConcurrent(LoanDto::getUserId,
+                Collectors.mapping(LoanDto::getLoanAmt, Collectors.toSet())));
+        logger.info("cMapGroup1:{}",cMapGroup1);
+
+        //转换为并发Map,key=String,value=Set<LoanDto>
+        ConcurrentSkipListMap<String,Set<LoanDto>> cMapGroup2 = loanList.stream().collect(
+                Collectors.groupingByConcurrent(LoanDto::getUserId,
+                        ConcurrentSkipListMap::new,
+                        Collectors.toSet()));
+        logger.info("cMapGroup2:{}",cMapGroup2);
         //------------------------------------------------------------------------------------------------
         long count = loanList.stream().collect(Collectors.counting());
+        //替代写法
         count = loanList.stream().count();
         logger.info("1 count:{}",count);
 
@@ -137,8 +159,75 @@ public class LambdaCollect {
         String join2 = userList.stream().collect(Collectors.joining("-|-","[","]"));
         logger.info("join1:{},,,,join2:{}", join1,join2);
 
-        //partitioningBy验证
-        //loanList.stream().collect(Collectors.partitioningBy(LoanDto))
+        //partitioningBy验证,根据分期数分组成是否map,一组key为true,一组key为false
+        //分组的参数条件为一个能返回是否的表达式
+        Map<Boolean,List<LoanDto>> partMap1 = loanList.stream().collect(
+                Collectors.partitioningBy(loan->loan.getPlanNum().compareTo(3)>=0));
+        logger.info("partMap1:{}", partMap1);
+
+        //分组为是否map, value域为Set<BigDecimal>仅为过滤的金额字段
+        Map<Boolean,Set<BigDecimal>> partMap2 = loanList.stream().collect(Collectors.partitioningBy(
+                loan->loan.getPlanNum().compareTo(3)>=0,
+                Collectors.mapping(LoanDto::getLoanAmt, Collectors.toSet())));
+        logger.info("partMap2:{}", partMap2);
+
+        //将list转换为map,key为对象属性,value可为属性,也可为根据对象构建的新对象
+        //若作为key的属性重复,会抛出键值冲突异常,可用下方方法替换,由新值覆盖旧值
+        Map<String,LoanDto> mapDto = null;
+        try{
+            mapDto = loanList.stream().collect(Collectors.toMap(LoanDto::getUserId,
+                    loanDto->LoanDto.builder()
+                            .loanAmt(loanDto.getLoanAmt())
+                            .planNum(loanDto.getPlanNum())
+                            .loanId(1L).build()
+            ));
+        } catch (Exception ignore){
+            //键值冲突异常,用下方方法替换,由新值覆盖旧值
+            mapDto = loanList.stream().collect(Collectors.toMap(LoanDto::getUserId,
+                    loanDto->LoanDto.builder()
+                            .loanAmt(loanDto.getLoanAmt())
+                            .planNum(loanDto.getPlanNum())
+                            .loanId(loanDto.getLoanId()).build(),
+                    (oldValue,newValue)->newValue
+            ));
+        }
+        logger.info("mapDto:{}", mapDto);
+
+        //默认value加法操作,相同的key加法汇总运算
+        Map<String,BigDecimal> mapAdd1 = loanList.stream().collect(Collectors.toConcurrentMap(
+                LoanDto::getUserId,
+                LoanDto::getLoanAmt,
+                BigDecimal::add));
+        logger.info("mapAdd1:{}", mapAdd1);
+
+        //手动value合并操作,key相同时,返回value中的大者
+        Map<String,BigDecimal> mapMax1 = loanList.stream().collect(Collectors.toConcurrentMap(
+                LoanDto::getUserId,
+                LoanDto::getLoanAmt,
+                (loanAmt1,loanAmt2)->loanAmt1.compareTo(loanAmt2)>0 ? loanAmt1 : loanAmt2));
+        logger.info("mapMax1:{}", mapMax1);
+
+        //手动value合并操作,key相同时,返回value中的大者
+        //第3个参数用于解决,key冲突时处理
+        //第4个参数用于指定生成的Map类型
+        ConcurrentMap<String,BigDecimal> cMapMax2 = loanList.stream().collect(Collectors.toConcurrentMap(
+                LoanDto::getUserId,
+                LoanDto::getLoanAmt,
+                (loanAmt1,loanAmt2)->loanAmt1.compareTo(loanAmt2)<0 ? loanAmt1 : loanAmt2,
+                ConcurrentSkipListMap::new));
+        logger.info("cMapMax2:{}", cMapMax2);
+
+        //第2个方法,将第一个方法的结果作为参数
+        //先对planNum取平均数,再转换为int
+        int avgInt2 = loanList.stream().collect(Collectors.collectingAndThen(Collectors.averagingInt(LoanDto::getPlanNum), Double::intValue));
+        logger.info("avgInt2:{}", avgInt2);
+
+        //先找到分期号最小的贷款单,然后通过get返回
+        LoanDto loanTmp = loanList.stream().collect(Collectors.collectingAndThen(
+                Collectors.minBy(Comparator.comparingInt(LoanDto::getPlanNum)),
+                Optional::get));
+        logger.info("loanTmp:{}", loanTmp);
+
     }
 
 }
