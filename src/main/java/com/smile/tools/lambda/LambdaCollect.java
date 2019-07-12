@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -38,7 +39,7 @@ public class LambdaCollect {
         LoanDto loanDto3 = new LoanDto();
         loanDto3.setLoanId(1003L);
         loanDto3.setUserId("ade");
-        loanDto3.setPlanNum(3);
+        loanDto3.setPlanNum(6);
         loanDto3.setLoanAmt(new BigDecimal("300"));
 
         loanList.add(loanDto1);
@@ -227,6 +228,25 @@ public class LambdaCollect {
                 Collectors.minBy(Comparator.comparingInt(LoanDto::getPlanNum)),
                 Optional::get));
         logger.info("loanTmp:{}", loanTmp);
+
+        //reduce作为groupingBy的一部分参与运算
+        Map<String,Optional<LoanDto>> oMap1 = loanList.stream().collect(
+                Collectors.groupingBy(
+                        LoanDto::getUserId,
+                        Collectors.reducing((oldValue,newValue)->newValue)
+                )
+        );
+        logger.info("oMap1:{}", oMap1);
+
+        //根据planNum分割,并获取所在分组中planNum最大的记录
+        Map<Boolean,Optional<LoanDto>> oMap2 = loanList.stream().collect(
+                Collectors.partitioningBy(
+                    loan->loan.getPlanNum().compareTo(4)>=0,
+                    Collectors.reducing(BinaryOperator.maxBy(Comparator.comparing(LoanDto::getLoanAmt)))
+                )
+        );
+        logger.info("oMap2:{}", oMap2);
+
 
     }
 
