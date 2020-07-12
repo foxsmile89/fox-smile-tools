@@ -29,7 +29,7 @@ public class LambdaTransfer {
         loanDto1.setLoanAmt(new BigDecimal("100"));
 
         LoanDto loanDto2 = new LoanDto();
-        loanDto2.setLoanId(1002L);
+        loanDto2.setLoanId(10012L);
         loanDto2.setUserId("cde");
         loanDto2.setLoanAmt(new BigDecimal("200"));
 
